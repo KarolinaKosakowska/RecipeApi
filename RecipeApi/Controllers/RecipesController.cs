@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RecipeApi.Auth;
 using RecipeApi.Models;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace RecipeApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RecipesController: ControllerBase
+    public class RecipesController : ControllerBase
     {
         private readonly RecipeContext db;
 
@@ -18,13 +19,15 @@ namespace RecipeApi.Controllers
         {
             this.db = db;
         }
+
         [HttpGet]
+        [KeyAuthorize(PolicyEnum.Reader)]
         public IActionResult GetRecipes()
         {
             try
             {
-               // throw new Exception("ohhohoh");
-                return Ok(db.Recipes.Include(a=>a.Category).ToList());
+                // throw new Exception("ohhohoh");
+                return Ok(db.Recipes.Include(a => a.Category).ToList());
             }
             catch (Exception ex)
             {
@@ -37,12 +40,12 @@ namespace RecipeApi.Controllers
         {
             try
             {
-                var recipe = db.Recipes.Include(a=>a.Category).SingleOrDefault(a => a.ID == id);
+                var recipe = db.Recipes.Include(a => a.Category).SingleOrDefault(a => a.ID == id);
                 if (recipe == null)
                 {
                     return NotFound("Nie znaleziono");
                 }
-                return Ok(recipe);               
+                return Ok(recipe);
             }
             catch (Exception ex)
             {
@@ -56,6 +59,7 @@ namespace RecipeApi.Controllers
         }
 
         [HttpPost]
+        [KeyAuthorize(PolicyEnum.User)]//|PolicyEnum.Admin)]
         public IActionResult AddRecipes(Recipe recipe)// [FromBody] Recipe recipe
         {
             try
@@ -113,6 +117,7 @@ namespace RecipeApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [KeyAuthorize(PolicyEnum.Admin)] 
         public ActionResult<Recipe> DeleteRecipes(int id)
         {
             try
@@ -125,7 +130,7 @@ namespace RecipeApi.Controllers
                 db.Recipes.Remove(recipeToDelete);
                 db.SaveChanges();
                 return Ok(recipeToDelete);
-                
+
             }
             catch (Exception ex)
             {
@@ -134,9 +139,9 @@ namespace RecipeApi.Controllers
         }
         private bool CategoryExists(int? id)
         {
-            if (id == null)            
+            if (id == null)
                 return true;
-            
+
             return db.Categories.Any(a => a.ID == id);
         }
     }
