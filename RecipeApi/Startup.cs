@@ -30,10 +30,12 @@ namespace RecipeApi
         {
             //services.AddDbContext<RecipeContext>(o => o.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
             services.AddDbContext<RecipeContext>(o => o.UseSqlite(StaticValues.ConnectionHelper));
-            services.AddTransient<IApiKeyRepo, ApiKeyRepo>();
-            services.AddTransient<IAuthorizationHandler, KeyHandler>();
-            services.AddHttpContextAccessor();// daje dostęp do contextu
-            services.AddAuthorization(options =>
+
+            services.AddHttpContextAccessor();
+
+            services
+                .AddMvcCore()
+               .AddAuthorization(options =>
             {
                 options.AddPolicy(PolicyEnum.Admin.ToString(), policy =>
                     policy.Requirements.Add(new KeyRequirement(PolicyEnum.Admin)));
@@ -43,11 +45,12 @@ namespace RecipeApi
                     policy.Requirements.Add(new KeyRequirement(PolicyEnum.Reader)));
                 options.AddPolicy(PolicyEnum.Lack.ToString(), policy =>
                     policy.Requirements.Add(new KeyRequirement(PolicyEnum.Lack)));
-            });
-            services.AddMvcCore()
+            })            // daje dostęp do contextu                
                 .AddDataAnnotations()
                 .AddJsonFormatters()
-                .AddJsonOptions(o => o.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented); // dodaj mvc
+                .AddJsonOptions(o => o.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented); // dodaj mvc 
+            services.AddTransient<IApiKeyRepo, ApiKeyRepo>();
+            services.AddTransient<IAuthorizationHandler, KeyHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,14 +64,14 @@ namespace RecipeApi
             {
                 app.UseHsts(); //wymuszanie ssl czyli połączenie certyfikowane; sprawdzanie czasu requesta, przerwanie połaczenia w razie zbyt długiego czasu
             }
-
+            addDefaultKey();
             app.UseMvc(); // dodaj mvc
 
             app.Run(async (context) =>
             {
                 await context.Response.WriteAsync("Nie znaleziono API.");
             });
-            addDefaultKey();
+            
         }
         private void addDefaultKey()
         {

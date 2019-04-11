@@ -59,7 +59,7 @@ namespace RecipeApi.Controllers
         }
 
         [HttpPost]
-        [KeyAuthorize(PolicyEnum.User)]//|PolicyEnum.Admin)]
+        [KeyAuthorize(PolicyEnum.Admin)]//|PolicyEnum.Admin)]
         public IActionResult AddRecipes(Recipe recipe)// [FromBody] Recipe recipe
         {
             try
